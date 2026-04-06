@@ -40,6 +40,13 @@ export class WebhookApi extends Construct {
       resources: [agentCluster.taskDefinition.taskDefinitionArn],
     }));
     orchestratorFn.addToRolePolicy(new iam.PolicyStatement({
+      actions: ['ecs:ListTasks'],
+      resources: ['*'],
+      conditions: {
+        ArnEquals: { 'ecs:cluster': agentCluster.cluster.clusterArn },
+      },
+    }));
+    orchestratorFn.addToRolePolicy(new iam.PolicyStatement({
       actions: ['iam:PassRole'],
       resources: [agentCluster.taskRole.roleArn, agentCluster.executionRole.roleArn],
     }));

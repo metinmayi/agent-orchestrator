@@ -1,9 +1,10 @@
 import { createHmac, timingSafeEqual } from 'crypto';
-import { ECSClient, RunTaskCommand } from '@aws-sdk/client-ecs';
+import { ECSClient, ListTasksCommand, RunTaskCommand } from '@aws-sdk/client-ecs';
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { buildEntrypointScript } from './entrypoint-script';
 
 const ecs = new ECSClient({});
+const MAX_CONCURRENT_TASKS = 2;
 
 function verifySignature(payload: string, signatureHeader: string | undefined, secret: string): boolean {
   if (!signatureHeader) return false;
@@ -49,6 +50,16 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
   if (!result.ok) return result.response;
 
   const { issueUrl, repoFullName } = result;
+
+  const runningTasks = await ecs.send(new ListTasksCommand({
+    cluster: process.env.ECS_CLUSTER_ARN,
+    desiredStatus: 'RUNNING',
+  }));
+  const activeCount = runningTasks.taskArns?.length ?? 0;
+  if (activeCount >= MAX_CONCURRENT_TASKS) {
+    return { statusCode: 429, body: JSON.stringify({ error: `Concurrency limit reached (${MAX_CONCURRENT_TASKS})` }) };
+  }
+
   const script = buildEntrypointScript(issueUrl, repoFullName);
 
   const command = new RunTaskCommand({
