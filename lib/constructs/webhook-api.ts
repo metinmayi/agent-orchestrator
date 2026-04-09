@@ -3,6 +3,7 @@ import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as nodejs from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as iam from 'aws-cdk-lib/aws-iam';
+import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import { Construct } from 'constructs';
 import * as path from 'path';
 import { AgentCluster } from './agent-cluster';
@@ -19,6 +20,14 @@ export class WebhookApi extends Construct {
 
     const { agentCluster } = props;
 
+    // ---- PR iteration tracking table ----
+    const prIterationsTable = new dynamodb.Table(this, 'PrIterationsTable', {
+      tableName: 'agent-pr-iterations',
+      partitionKey: { name: 'prKey', type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+
     // ---- Orchestrator Lambda ----
     const orchestratorFn = new nodejs.NodejsFunction(this, 'OrchestratorFunction', {
       entry: path.join(__dirname, '..', '..', 'lambda', 'orchestrator.ts'),
@@ -34,6 +43,8 @@ export class WebhookApi extends Construct {
         ECS_SECURITY_GROUP_ID: agentCluster.securityGroup.securityGroupId,
       },
     });
+
+    prIterationsTable.grantReadWriteData(orchestratorFn);
 
     orchestratorFn.addToRolePolicy(new iam.PolicyStatement({
       actions: ['ecs:RunTask'],

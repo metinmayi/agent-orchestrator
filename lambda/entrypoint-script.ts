@@ -1,6 +1,4 @@
-export function buildEntrypointScript(issueUrl: string, repoFullName: string): string {
-  const agentPrompt = `Using the PR-implementor agent, implement the following Github issue: ${issueUrl}`;
-
+export function buildEntrypointScript(agentPrompt: string, repoFullName: string): string {
   return [
     'set -euo pipefail',
 

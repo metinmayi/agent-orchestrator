@@ -1,5 +1,9 @@
 {
   "permissions": {
-    "allow": []
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(npx cdk:*)",
+      "Bash(npx tsc:*)"
+    ]
   }
 }
