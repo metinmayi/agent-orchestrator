@@ -9,7 +9,7 @@ export async function handle(body: any): Promise<APIGatewayProxyResult> {
   const issueUrl: string = body.issue.html_url;
   const repoFullName: string = body.repository.full_name;
 
-  const agentPrompt = `Using the PR-implementor agent, implement the following Github issue: ${issueUrl}`;
+  const agentCommand = `/pr-implement ${issueUrl}`;
 
-  return runAgentTask(agentPrompt, repoFullName, { issueUrl });
+  return runAgentTask(agentCommand, repoFullName, { issueUrl });
 }

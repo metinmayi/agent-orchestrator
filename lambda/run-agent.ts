@@ -5,8 +5,16 @@ import { buildEntrypointScript } from './entrypoint-script';
 const ecs = new ECSClient({});
 const MAX_CONCURRENT_TASKS = 2;
 
+const CLAUDE_FLAGS = [
+  '--model sonnet',
+  '--effort medium',
+  '--permission-mode bypassPermissions',
+  '--no-session-persistence',
+  '--output-format json',
+];
+
 export async function runAgentTask(
-  agentPrompt: string,
+  agentCommand: string,
   repoFullName: string,
   responseContext: Record<string, unknown> = {},
 ): Promise<APIGatewayProxyResult> {
@@ -19,7 +27,7 @@ export async function runAgentTask(
     return { statusCode: 429, body: JSON.stringify({ error: `Concurrency limit reached (${MAX_CONCURRENT_TASKS})` }) };
   }
 
-  const script = buildEntrypointScript(agentPrompt, repoFullName);
+  const script = buildEntrypointScript(agentCommand, repoFullName, CLAUDE_FLAGS);
 
   const command = new RunTaskCommand({
     cluster: process.env.ECS_CLUSTER_ARN,

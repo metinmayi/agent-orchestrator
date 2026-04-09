@@ -20,7 +20,7 @@ export async function handle(body: any): Promise<APIGatewayProxyResult> {
     return { statusCode: 200, body: 'Iteration limit reached' };
   }
 
-  const agentPrompt = `Using the pr-iterator agent, iterate on the following Github PR: ${prUrl}`;
+  const agentCommand = `/pr-iterate ${prUrl}`;
 
-  return runAgentTask(agentPrompt, repoFullName, { prUrl, iteration: result.count });
+  return runAgentTask(agentCommand, repoFullName, { prUrl, iteration: result.count });
 }

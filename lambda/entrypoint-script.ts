@@ -1,11 +1,8 @@
-export function buildEntrypointScript(agentPrompt: string, repoFullName: string): string {
+export function buildEntrypointScript(agentCommand: string, repoFullName: string, claudeFlags: string[]): string {
   return [
     'set -euo pipefail',
 
-    '# ---------- 1. Install Claude Code ----------',
-    'npm install -g @anthropic-ai/claude-code',
-
-    '# ---------- 2. Authenticate with GitHub ----------',
+    '# ---------- 1. Authenticate with GitHub ----------',
     'NOW=$(date +%s)',
     'IAT=$((NOW - 60))',
     'EXP=$((NOW + 600))',
@@ -24,15 +21,15 @@ export function buildEntrypointScript(agentPrompt: string, repoFullName: string)
     `  -H "Accept: application/vnd.github+json" \\`,
     `  "https://api.github.com/app/installations/$INSTALLATION_ID/access_tokens" | jq -r '.token')`,
     '',
-    '# ---------- 3. Pull repository ----------',
+    '# ---------- 2. Pull repository ----------',
     `git clone "https://x-access-token:$GITHUB_TOKEN@github.com/${repoFullName}.git" /work/repo`,
     'cd /work/repo',
 
-    '# ---------- 4. Set up GitHub MCP ----------',
+    '# ---------- 3. Set up GitHub MCP ----------',
     'claude mcp add-json github "{\\"type\\":\\"http\\",\\"url\\":\\"https://api.githubcopilot.com/mcp\\",\\"headers\\":{\\"Authorization\\":\\"Bearer $GITHUB_TOKEN\\"}}"',
     `claude mcp list`,
 
-    '# ---------- 5. Execute agent ----------',
-    `claude --permission-mode auto --print "${agentPrompt}"`,
+    '# ---------- 4. Execute agent ----------',
+    `claude -p "${agentCommand}" ${claudeFlags.join(' ')}`,
   ].join('\n');
 }
