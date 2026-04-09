@@ -2,6 +2,7 @@ import { createHmac, timingSafeEqual } from 'crypto';
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import * as issuesHandler from './handlers/issues';
 import * as pullRequestHandler from './handlers/pull-request';
+import * as prIterationHandler from './handlers/pr-iteration';
 
 function verifySignature(payload: string, signatureHeader: string | undefined, secret: string): boolean {
   if (!signatureHeader) return false;
@@ -39,6 +40,8 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
       return issuesHandler.handle(body);
     case 'pull_request':
       return pullRequestHandler.handle(body);
+    case 'pull_request_review_comment':
+      return prIterationHandler.handle(body);
     default:
       return { statusCode: 200, body: `Ignored event: ${githubEvent ?? 'unknown'}` };
   }
